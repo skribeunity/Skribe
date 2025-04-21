@@ -28,9 +28,6 @@ jobs:
           # Required to run dotnet test on .NET Framework projects
           dotnet-version: '7.0.x'
 
-      - name: Build solution
-        run: msbuild Skribe.sln /p:Configuration=Release
-
       - name: Run tests with dotnet test
         run: |
           # Run all tests in the solution targeting .NET Framework 4.8
