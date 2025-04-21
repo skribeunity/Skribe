@@ -27,7 +27,6 @@ jobs:
         with:
           # Required to run dotnet test on .NET Framework projects
           dotnet-version: '7.0.x'
-          cache: true
 
       - name: Build
         run: dotnet build --no-restore
