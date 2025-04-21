@@ -20,7 +20,7 @@ jobs:
         uses: NuGet/setup-nuget@v1.1.1
 
       - name: Restore NuGet packages
-        run: nuget restore YourSolution.sln
+        run: nuget restore Skribe.sln
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
