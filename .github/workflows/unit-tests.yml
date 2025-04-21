@@ -27,8 +27,9 @@ jobs:
         with:
           # Required to run dotnet test on .NET Framework projects
           dotnet-version: '7.0.x'
+          cache: true
 
-      - name: Run tests with dotnet test
-        run: |
-          # Run all tests in the solution targeting .NET Framework 4.8
-          dotnet test Skribe.sln --configuration Release --framework net48
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test with the dotnet CLI
+        run: dotnet test --no-build
