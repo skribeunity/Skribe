@@ -1,0 +1,6 @@
+/.idea
+/packages
+/*.user
+/.git
+/*/bin
+/*/obj
