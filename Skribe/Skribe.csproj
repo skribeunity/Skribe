@@ -4,7 +4,7 @@
             Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
     <!-- Build Configurations-->
     <PropertyGroup>
-        <LangVersion>9.0</LangVersion>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -43,19 +43,47 @@
         <Reference Include="System.Core"/>
         <Reference Include="System.Data"/>
         <Reference Include="System.Xml"/>
+        <Reference Include="Tomlyn, Version=0.19.0.0, Culture=neutral, processorArchitecture=MSIL">
+          <HintPath>..\packages\Tomlyn.0.19.0\lib\netstandard2.0\Tomlyn.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <!-- Files -->
     <ItemGroup>
         <Compile Include="EmbeddingSystem\PackageManager.cs"/>
+        <Compile Include="Language\Enum\TokenType.cs"/>
+        <Compile Include="Language\Memory\SkribeContext.cs"/>
+        <Compile Include="Language\Memory\SkribeEvent.cs"/>
+        <Compile Include="Language\Memory\SkribeFunction.cs"/>
+        <Compile Include="Language\Memory\SkribeObject.cs"/>
+        <Compile Include="Language\Memory\SkribeParameter.cs"/>
+        <Compile Include="Language\Memory\SkribeVariable.cs"/>
+        <Compile Include="Language\Misc\ReturnException.cs"/>
+        <Compile Include="Language\Misc\ScribeAttributes.cs"/>
+        <Compile Include="Language\Nodes\AssignmentNode.cs"/>
+        <Compile Include="Language\Nodes\BinaryOpNode.cs"/>
+        <Compile Include="Language\Nodes\FunctionCallNode.cs"/>
+        <Compile Include="Language\Nodes\LiteralNode.cs"/>
+        <Compile Include="Language\Nodes\SkribeNode.cs"/>
+        <Compile Include="Language\Nodes\VariableNode.cs"/>
+        <Compile Include="Language\Parsing\Preprocessor.cs" />
+        <Compile Include="Language\Parsing\ScribeParser.cs"/>
+        <Compile Include="Language\Parsing\SkribeLexer.cs"/>
+        <Compile Include="Language\ScribeExecutor.cs"/>
+        <Compile Include="Language\ScribeExtensionSystem.cs"/>
+        <Compile Include="Language\SkribeEngine.cs"/>
+        <Compile Include="Language\Types\Vector3.cs"/>
         <Compile Include="LoggingHook.cs"/>
         <Compile Include="Skribe.cs"/>
-        <Compile Include="Language\Skribe.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Include="Plugins\*.dll"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="packages.config" />
     </ItemGroup>
 
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>

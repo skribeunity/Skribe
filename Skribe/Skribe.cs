@@ -12,14 +12,26 @@
         /// </summary>
         public static SkribeConfiguration Configuration { get; private set; }
 
-        public static void Start(SkribeConfiguration configuration)
+        public static void Start(SkribeConfiguration configuration = null)
         {
             if (Started) return;
+            if (configuration == null)
+            {
+                Configuration = new SkribeConfiguration();
+            }
+            else
+            {
+                Configuration = configuration;
+            }
+
+            Started = true;
         }
 
         public static void Stop()
         {
             if (!Started) return;
+            Configuration = null;
+            Started = false;
         }
     }
 
@@ -27,5 +39,10 @@
     {
         public LoggingHook LoggingHook { get; set; } = new ConsoleHook();
         public string SkribePath { get; set; } = "./skribe";
+    }
+
+    public static class GlobalHooks
+    {
+        public static LoggingHook LoggingHook => Skribe.Configuration.LoggingHook;
     }
 }
