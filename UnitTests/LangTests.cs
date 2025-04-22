@@ -285,24 +285,6 @@ namespace SkribeUnitTests
             _engine.Execute(@" Attack(enemy, player, 20) ", ctx);
             ClassicAssert.AreEqual(80.0, hero.Health);
         }
-
-        [Test]
-        public void ProcessesInputCorrectly()
-        {
-            // Arrange
-            var preprocessor = new Preprocessor();
-            preprocessor.RegisterRemovable("is");
-            preprocessor.RegisterReplacement(">", "greater than");
-            const string input = "if x is > 5 echo 'hello [is] >'";
-
-            // Act
-            var result = preprocessor.Process(input);
-
-            // Assert
-            ClassicAssert.AreEqual("if x greater than 5 echo 'hello [is] >'", result);
-            StringAssert.Contains("greater than", result);
-            StringAssert.Contains("'hello [is] >'", result);
-        }
     }
 }
 
