@@ -30,6 +30,9 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore
+
+      - name: Install NUnit Console Runner
+        run: nuget install NUnit.ConsoleRunner -Version 3.20.0 -OutputDirectory testrunner
         
       - name: Find UnitTests.dll directory
         id: find_test_dll
