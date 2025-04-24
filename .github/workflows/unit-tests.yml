@@ -30,5 +30,20 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore
-      - name: Test with the dotnet CLI
-        run: dotnet test --no-build
+        
+      - name: Find UnitTests.dll directory
+        id: find_test_dll
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem -Path . -Recurse -Filter UnitTests.dll | Select-Object -First 1
+          if (-not $dll) {
+            Write-Error "UnitTests.dll not found"
+            exit 1
+          }
+          $folder = Split-Path $dll.FullName
+          "TEST_DLL_FOLDER=$folder" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+      - name: Run NUnit tests
+        run: |
+          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe "$env:TEST_DLL_FOLDER\UnitTests.dll"
+        shell: pwsh
