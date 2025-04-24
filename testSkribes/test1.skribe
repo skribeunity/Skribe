@@ -1,0 +1,2 @@
+set day to 10 plus 10
+log(day)

@@ -18,7 +18,7 @@ namespace Skribe.Language.Memory
                 return variable;
             if (_parent != null)
                 return _parent.GetVariable(name);
-            return ScribeEngine.Instance.GetGlobalVariable(name);
+            return SkribeEngine.Instance.GetGlobalVariable(name);
         }
 
         public void SetVariable(string name, object value)

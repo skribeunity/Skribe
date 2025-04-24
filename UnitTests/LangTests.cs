@@ -15,19 +15,19 @@ namespace SkribeUnitTests
     /// Unit tests for the Scribe language
     /// </summary>
     [TestFixture]
-    public class ScribeTests
+    public class SkribeTests
     {
-        private ScribeEngine _engine;
+        private SkribeEngine _engine;
 
         [SetUp]
         public void Setup()
         {
             // Reset the singleton
-            typeof(ScribeEngine)
+            typeof(SkribeEngine)
                 .GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static)
                 .SetValue(null, null);
 
-            _engine = ScribeEngine.Instance;
+            _engine = SkribeEngine.Instance;
             Skribe.Skribe.Start();
         }
 
@@ -268,7 +268,7 @@ namespace SkribeUnitTests
         public void TestExtensionSystem()
         {
             // top‐level
-            ScribeExtensionSystem.LoadExtensionsFromAssembly(typeof(ScribeTests).Assembly);
+            SkribeExtensionSystem.LoadExtensionsFromAssembly(typeof(SkribeTests).Assembly);
 
             var ctx = new ScribeContext();
             _engine.Execute(@" var enemy = createEnemy(""Goblin"", 50) ", ctx);
@@ -291,13 +291,13 @@ namespace SkribeUnitTests
 
 public class ScribeGameIntegration
 {
-    public static void RegisterGameTypes(ScribeEngine engine)
+    public static void RegisterGameTypes(SkribeEngine engine)
     {
         engine.RegisterType(new ScribeType("Player", typeof(Player)));
         engine.RegisterType(new ScribeType("Vector", typeof(Vector3)));
     }
 
-    public static void RegisterGameFunctions(ScribeEngine engine)
+    public static void RegisterGameFunctions(SkribeEngine engine)
     {
         engine.RegisterFunction(new ScribeFunction("spawn", args =>
         {
@@ -312,7 +312,7 @@ public class ScribeGameIntegration
         }));
     }
 
-    public static void RegisterGameEvents(ScribeEngine engine)
+    public static void RegisterGameEvents(SkribeEngine engine)
     {
         engine.RegisterEvent(new ScribeEvent("playerJoin", new[]
         {

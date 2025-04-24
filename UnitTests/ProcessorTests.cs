@@ -6,7 +6,7 @@ using Skribe.Language.Parsing;
 namespace UnitTests
 {
     [TestFixture]
-    public class LanguageTests
+    public class ProcessorTests
     {
         /// <summary>
         /// Collapses every run of whitespace to a single space and trims ends,

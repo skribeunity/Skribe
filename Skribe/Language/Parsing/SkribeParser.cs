@@ -9,7 +9,7 @@ namespace Skribe.Language.Parsing
     /// <summary>
     /// Parser for the Scribe language
     /// </summary>
-    public class ScribeParser
+    public class SkribeParser
     {
         private List<Token> _tokens;
         private int _position;
@@ -396,13 +396,39 @@ namespace Skribe.Language.Parsing
 
         private Token Expect(TokenType type, string value = null)
         {
-            if (_current.Type != type)
-                throw new Exception($"Expected {type}, got {_current.Type} at {_current.Line}:{_current.Column}");
-            if (value != null && _current.Value != value)
-                throw new Exception($"Expected '{value}', got '{_current.Value}' at {_current.Line}:{_current.Column}");
-            var t = _current;
+            // ------------------------------------------------------------------
+            // 1) End-of-file guard
+            // ------------------------------------------------------------------
+            if (_current == null)
+            {
+                // use the last token that actually exists, or a dummy one
+                Token lastToken = _tokens.Count > 0
+                    ? _tokens[_tokens.Count - 1]
+                    : new Token(TokenType.EndOfFile, string.Empty, 0, 0);
+
+                throw new SyntaxException("Unexpected end of file", lastToken);
+            }
+
+            // ------------------------------------------------------------------
+            // 2) Type / value mismatch
+            // ------------------------------------------------------------------
+            bool typeMismatch  = _current.Type != type;
+            bool valueMismatch = value != null && _current.Value != value;
+
+            if (typeMismatch || valueMismatch)
+            {
+                string expected = value ?? type.ToString();
+                throw new SyntaxException(
+                    $"Expected {expected}, found '{_current.Value}'",
+                    _current);
+            }
+
+            // ------------------------------------------------------------------
+            // 3) Success – return token and advance
+            // ------------------------------------------------------------------
+            Token tok = _current;
             _position++;
-            return t;
+            return tok;
         }
     }
 }

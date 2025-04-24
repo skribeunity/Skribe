@@ -37,7 +37,7 @@ namespace Skribe.Language.Memory
             for (var i = 0; i < args.Length; i++)
             {
                 var param = Parameters[i];
-                var type = ScribeEngine.Instance.GetType(param.TypeName);
+                var type = SkribeEngine.Instance.GetType(param.TypeName);
                 if (type == null)
                     throw new Exception($"Unknown type '{param.TypeName}' for parameter '{param.Name}'");
                 try

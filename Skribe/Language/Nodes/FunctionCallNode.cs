@@ -18,7 +18,7 @@ namespace Skribe.Language.Nodes
 
         public override object Execute(ScribeContext context)
         {
-            var func = ScribeEngine.Instance.GetFunction(Name);
+            var func = SkribeEngine.Instance.GetFunction(Name);
             if (func == null) throw new Exception($"Function '{Name}' not found");
             var args = Arguments.Select(a => a.Execute(context)).ToArray();
             return func.Invoke(args);

@@ -209,7 +209,7 @@ namespace Skribe.Language.Nodes
                         fnCtx.SetVariable(Parameters[i], i < args.Length ? args[i] : null);
                     return Body.Execute(fnCtx);
                 });
-                ScribeEngine.Instance.RegisterFunction(new ScribeFunction(Name, impl, sparams));
+                SkribeEngine.Instance.RegisterFunction(new ScribeFunction(Name, impl, sparams));
                 return null;
             }
         }
@@ -245,7 +245,7 @@ namespace Skribe.Language.Nodes
 
             public override object Execute(ScribeContext context)
             {
-                var evt = ScribeEngine.Instance.GetEvent(EventName);
+                var evt = SkribeEngine.Instance.GetEvent(EventName);
                 if (evt == null)
                     throw new Exception($"Event '{EventName}' not found");
 

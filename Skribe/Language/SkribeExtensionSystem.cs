@@ -5,20 +5,20 @@ using Skribe.Language.Misc;
 
 namespace Skribe.Language
 {
-    public class ScribeExtensionSystem
+    public class SkribeExtensionSystem
     {
         public static void LoadExtensionsFromAssembly(Assembly assembly)
         {
-            var engine = ScribeEngine.Instance;
+            var engine = SkribeEngine.Instance;
             // inspect both the test assembly and core Scribe assembly
-            var assemblies = new[] { assembly, typeof(ScribeExtensionSystem).Assembly };
+            var assemblies = new[] { assembly, typeof(SkribeExtensionSystem).Assembly };
             foreach (var asm in assemblies)
             foreach (var t in asm.GetTypes())
                 if (t.GetCustomAttribute<ScribeExtensionAttribute>() != null)
                     RegisterExtensionType(engine, t);
         }
 
-        private static void RegisterExtensionType(ScribeEngine engine, Type type)
+        private static void RegisterExtensionType(SkribeEngine engine, Type type)
         {
             var ta = type.GetCustomAttribute<ScribeTypeAttribute>();
             if (ta != null)
@@ -42,7 +42,7 @@ namespace Skribe.Language
             }
         }
 
-        private static void RegisterExtensionFunction(ScribeEngine engine, MethodInfo m, ScribeFunctionAttribute attr)
+        private static void RegisterExtensionFunction(SkribeEngine engine, MethodInfo m, ScribeFunctionAttribute attr)
         {
             var pars = m.GetParameters();
             var sps = new ScribeParameter[pars.Length];

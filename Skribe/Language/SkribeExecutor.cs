@@ -6,7 +6,7 @@ namespace Skribe.Language
     /// <summary>
     /// Executes a parsed script
     /// </summary>
-    public class ScribeExecutor
+    public class SkribeExecutor
     {
         public object ExecuteScript(BinaryOpNode.ScribeScript script, ScribeContext context)
         {

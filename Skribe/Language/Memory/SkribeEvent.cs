@@ -10,7 +10,7 @@ namespace Skribe.Language.Memory
         public ScribeParameter[] Parameters { get; }
 
         // Now store both script + the context it was registered in
-        private readonly List<(BinaryOpNode.ScribeScript Script, ScribeContext Context)> _handlers = new();
+        internal readonly List<(BinaryOpNode.ScribeScript Script, ScribeContext Context)> _handlers = new();
 
         public ScribeEvent(string name, ScribeParameter[] parameters)
         {
@@ -34,7 +34,7 @@ namespace Skribe.Language.Memory
             if (args.Length != Parameters.Length)
                 throw new Exception($"Event '{Name}' requires {Parameters.Length} parameters, but got {args.Length}");
 
-            var executor = new ScribeExecutor();
+            var executor = new SkribeExecutor();
 
             foreach (var (script, ctx) in _handlers)
                 try

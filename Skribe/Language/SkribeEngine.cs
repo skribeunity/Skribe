@@ -9,9 +9,9 @@ namespace Skribe.Language
     /// <summary>
     /// The core Scribe language system
     /// </summary>
-    public class ScribeEngine
+    public class SkribeEngine
     {
-        private static ScribeEngine _instance;
+        private static SkribeEngine _instance;
         private Dictionary<string, ScribeFunction> _functions = new();
         private Dictionary<string, ScribeType> _types = new();
         private Dictionary<string, ScribeEvent> _events = new();
@@ -20,12 +20,12 @@ namespace Skribe.Language
         /// <summary>
         /// Singleton instance of the Scribe engine
         /// </summary>
-        public static ScribeEngine Instance
+        public static SkribeEngine Instance
         {
             get
             {
                 if (_instance == null)
-                    _instance = new ScribeEngine();
+                    _instance = new SkribeEngine();
                 return _instance;
             }
         }
@@ -33,7 +33,7 @@ namespace Skribe.Language
         /// <summary>
         /// Private constructor to enforce singleton pattern
         /// </summary>
-        private ScribeEngine()
+        private SkribeEngine()
         {
             // Register basic types
             RegisterType(new ScribeType("object", typeof(object)));
@@ -64,6 +64,14 @@ namespace Skribe.Language
             }));
         }
 
+        public void Flush()
+        {
+            foreach (var keyValuePair in _events)
+            {
+                keyValuePair.Value._handlers.Clear();
+            }
+        }
+
         public void RegisterType(ScribeType type)
         {
             _types[type.Name] = type;
@@ -87,11 +95,11 @@ namespace Skribe.Language
             context = context ?? new ScribeContext();
 
             // Parse the script
-            var parser = new ScribeParser();
+            var parser = new SkribeParser();
             var script = parser.Parse(scriptText);
 
             // Execute the script
-            var executor = new ScribeExecutor();
+            var executor = new SkribeExecutor();
             return executor.ExecuteScript(script, context);
         }
 
