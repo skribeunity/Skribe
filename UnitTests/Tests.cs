@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using Skribe;
@@ -34,8 +35,17 @@ namespace UnitTests
             }));
             Skribe.Skribe.Stop();
             var configuration = new SkribeConfiguration();
-            var dir = Directory.GetParent("./").Parent.Parent.Parent;
-            configuration.SkribePath = $"{dir.FullName}/testSkribes";
+            string directory = AppDomain.CurrentDomain.BaseDirectory;
+
+            while (directory != null)
+            {
+                if (Directory.GetFiles(directory, "*.sln").Any())
+                    break;
+
+                directory = Directory.GetParent(directory)?.FullName;
+            }
+            
+            configuration.SkribePath = $"{directory}/testSkribes";
             Skribe.Skribe.Start(configuration);
             TestContext.WriteLine(Path.GetFullPath(Skribe.Skribe.Configuration.SkribePath));
         }
