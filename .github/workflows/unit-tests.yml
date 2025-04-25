@@ -1,4 +1,4 @@
-name: .NET Framework 4.8 CI
+name: Build and Sync Docs
 
 on:
   push:
@@ -9,12 +9,18 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-update-docs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code repository (Skribe)
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.1.1
@@ -25,16 +31,15 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v3
         with:
-          # Required to run dotnet test on .NET Framework projects
           dotnet-version: '7.0.x'
 
-      - name: Build
+      - name: Build project
         run: dotnet build --no-restore
 
       - name: Install NUnit Console Runner
         run: nuget install NUnit.ConsoleRunner -Version 3.20.0 -OutputDirectory testrunner
-        
-      - name: Find UnitTests.dll directory
+
+      - name: Find UnitTests.dll
         id: find_test_dll
         shell: pwsh
         run: |
@@ -46,7 +51,43 @@ jobs:
           $folder = Split-Path $dll.FullName
           "TEST_DLL_FOLDER=$folder" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
-      - name: Run NUnit tests
+      - name: Run NUnit tests and generate XML
         run: |
-          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe "$env:TEST_DLL_FOLDER\UnitTests.dll"
+          mkdir TestResults
+          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe "$env:TEST_DLL_FOLDER\UnitTests.dll" --result=TestResults/TestResult.xml;format=nunit2
         shell: pwsh
+
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+      - name: Generate HTML Test Report
+        run: |
+          reportgenerator "-reports:TestResults/TestResult.xml" "-targetdir:TestReport" "-reporttypes:Html"
+        shell: pwsh
+
+      - name: Fetch recent commits (write to Markdown)
+        run: |
+          mkdir -p DocUpdates
+          node ./scripts/fetch-commits.js
+        shell: bash
+
+      - name: Checkout Docs Repository
+        uses: actions/checkout@v4
+        with:
+          repository: skribeunity/skribe-docs
+          path: docs_repo
+          token: ${{ secrets.DOCS_DEPLOY_TOKEN }}
+
+      - name: Copy updates into docs repository
+        run: |
+          cp -r TestReport/* docs_repo/static/test-report/
+          cp -r DocUpdates/recent-commits.md docs_repo/docs/
+
+      - name: Commit and Push changes to Docs
+        run: |
+          cd docs_repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Auto-update test report and commits from code repo"
+          git push
