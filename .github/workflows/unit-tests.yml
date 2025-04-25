@@ -9,28 +9,27 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # ───── Code checkout ──────────────────────────────────────────────
+      # ───── Checkout & toolchain ─────────────────────────────────────────
       - uses: actions/checkout@v4
         name: Checkout code repository (Skribe)
-      
-      # ───── Toolchain setup ────────────────────────────────────────────
+
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.1.1
 
       - name: Restore NuGet packages
         run: nuget restore Skribe.sln
 
-      - name: Setup MSBuild (VS Build Tools 2022)
+      - name: Setup MSBuild (VS 2022 Build Tools)
         uses: microsoft/setup-msbuild@v2
         with:
-          vs-version: '[17.0,18.0)'   # pin to VS 2022 channel
+          vs-version: '[17.0,18.0)'
       
-      # ───── Build ──────────────────────────────────────────────────────
+      # ───── Build ───────────────────────────────────────────────────────
       - name: Build solution (Release|AnyCPU)
         run: msbuild Skribe.sln /p:Configuration=Release /p:Platform="Any CPU"
       
-      # ───── Test run ───────────────────────────────────────────────────
-      - name: Install NUnit Console Runner (desktop)
+      # ───── Test run ────────────────────────────────────────────────────
+      - name: Install NUnit Console Runner
         run: nuget install NUnit.ConsoleRunner -Version 3.20.0 -OutputDirectory testrunner
 
       - name: Locate UnitTests.dll
@@ -51,7 +50,7 @@ jobs:
             "$env:TEST_DLL" `
             --result="TestResults\TestResult.xml"
       
-      # ───── nunit3 ⇒ JUnit (XSLT) ──────────────────────────────────────
+      # ───── nunit3 ⇒ JUnit (XSLT) ───────────────────────────────────────
       - name: Download nunit3-junit XSLT
         shell: pwsh
         run: |
@@ -66,28 +65,30 @@ jobs:
           $xslt.Load("nunit3-junit.xslt")
           $xslt.Transform("TestResults\TestResult.xml", "TestResults\junit.xml")
       
-      # ───── Allure report ──────────────────────────────────────────────
-      - name: Install Allure CLI
-        shell: pwsh
-        run: choco install allure-commandline -y --no-progress
-
-      - name: Generate Allure HTML report
-        shell: pwsh
-        run: |
-          allure generate TestResults --clean -o AllureReport
-      
-      # ───── Commit log snippet (unchanged) ─────────────────────────────
-      - name: Setup Node.js (for helper script)
+      # ───── Allure report (npm) ─────────────────────────────────────────
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with: { node-version: '20' }
 
+      - name: Install Allure CLI
+        shell: bash
+        run: |
+          npm install -g allure-commandline@2.34.0 --update-notifier=false
+          echo "$(npm bin -g)" >> "$GITHUB_PATH"
+
+      - name: Generate Allure HTML report
+        shell: bash
+        run: |
+          allure generate TestResults --clean -o AllureReport
+      
+      # ───── Commit log snippet ──────────────────────────────────────────
       - name: Collect recent commits (Markdown)
         shell: bash
         run: |
           mkdir -p DocUpdates
           node ./scripts/fetch-commits.js
       
-      # ───── Push artefacts to docs repo ────────────────────────────────
+      # ───── Push artefacts to docs repo ─────────────────────────────────
       - name: Checkout docs repository
         uses: actions/checkout@v4
         with:
