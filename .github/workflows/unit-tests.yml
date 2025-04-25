@@ -2,25 +2,23 @@ name: Build and Sync Docs
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build-and-update-docs:
     runs-on: windows-latest
 
     steps:
+      # ───── Repo & toolchain ────────────────────────────────────────────────────
       - name: Checkout code repository (Skribe)
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (for helper script)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.1.1
@@ -33,61 +31,85 @@ jobs:
         with:
           dotnet-version: '7.0.x'
 
-      - name: Build project
+      - name: Build solution
         run: dotnet build --no-restore
-
+      
+      # ───── Test run ────────────────────────────────────────────────────────────
       - name: Install NUnit Console Runner
         run: nuget install NUnit.ConsoleRunner -Version 3.20.0 -OutputDirectory testrunner
 
-      - name: Find UnitTests.dll
+      - name: Locate UnitTests.dll
         id: find_test_dll
         shell: pwsh
         run: |
           $dll = Get-ChildItem -Path . -Recurse -Filter UnitTests.dll | Select-Object -First 1
-          if (-not $dll) {
-            Write-Error "UnitTests.dll not found"
-            exit 1
-          }
-          $folder = Split-Path $dll.FullName
-          "TEST_DLL_FOLDER=$folder" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+          if (-not $dll) { Write-Error "UnitTests.dll not found"; exit 1 }
+          "TEST_DLL=$($dll.FullName)" | Out-File $env:GITHUB_ENV -Encoding utf8
 
-      - name: Run NUnit tests and generate XML
+      - name: Run tests → nunit3 XML
+        shell: pwsh
         run: |
           mkdir TestResults
-          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe "$env:TEST_DLL_FOLDER\UnitTests.dll" --result="TestResults/TestResult.xml;format=nunit2"
+          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe `
+            "$env:TEST_DLL" `
+            --result="TestResults\TestResult.xml"
+      
+      # ───── Convert nunit3 → JUnit (Allure-ready) ───────────────────────────────
+      - name: Download nunit3-junit XSLT
         shell: pwsh
-
-      - name: Install ReportGenerator
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
-
-      - name: Generate HTML Test Report
         run: |
-          reportgenerator "-reports:TestResults/TestResult.xml" "-targetdir:TestReport" "-reporttypes:Html"
-        shell: pwsh
+          Invoke-WebRequest `
+            -Uri https://raw.githubusercontent.com/nunit/nunit-transforms/master/nunit3-junit/nunit3-junit.xslt `
+            -OutFile nunit3-junit.xslt
 
-      - name: Fetch recent commits (write to Markdown)
+      - name: Transform to JUnit XML
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Xml,System.Xml.Xsl
+          $xslt = New-Object System.Xml.Xsl.XslCompiledTransform
+          $xslt.Load("nunit3-junit.xslt")
+          $xslt.Transform("TestResults\TestResult.xml","TestResults\junit.xml")
+      
+      # ───── Allure report ───────────────────────────────────────────────────────
+      - name: Install Allure CLI
+        shell: pwsh
+        run: choco install allure-commandline -y --no-progress
+
+      - name: Generate Allure HTML report
+        shell: pwsh
+        run: |
+          allure generate TestResults --clean -o AllureReport
+      
+      # ───── Changelog snippet (existing JS script) ──────────────────────────────
+      - name: Collect recent commits (Markdown)
+        shell: bash
         run: |
           mkdir -p DocUpdates
           node ./scripts/fetch-commits.js
-        shell: bash
-
-      - name: Checkout Docs Repository
+      
+      # ───── Push docs ───────────────────────────────────────────────────────────
+      - name: Checkout docs repository
         uses: actions/checkout@v4
         with:
           repository: skribeunity/skribe-docs
           path: docs_repo
           token: ${{ secrets.DOCS_DEPLOY_TOKEN }}
 
-      - name: Copy updates into docs repository
+      - name: Copy artefacts into docs repo
+        shell: bash
         run: |
-          cp -r TestReport/* docs_repo/static/test-report/
-          cp -r DocUpdates/recent-commits.md docs_repo/docs/
+          mkdir -p docs_repo/static/test-report
+          cp -r AllureReport/* docs_repo/static/test-report/
+          cp DocUpdates/recent-commits.md docs_repo/docs/
 
-      - name: Commit and Push changes to Docs
+      - name: Commit & push docs changes
+        shell: bash
         run: |
           cd docs_repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Auto-update test report and commits from code repo"
-          git push
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-update Allure test report and commit log"
+            git push
+          fi
