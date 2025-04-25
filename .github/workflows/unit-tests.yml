@@ -1,52 +1,49 @@
-name: Build and Sync Docs
+name: Build and Sync Docs (NET Framework)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  push:         { branches: [main] }
+  pull_request: { branches: [main] }
 
 jobs:
   build-and-update-docs:
     runs-on: windows-latest
 
     steps:
-      # ───── Repo & toolchain ────────────────────────────────────────────────────
-      - name: Checkout code repository (Skribe)
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js (for helper script)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
+      # ───── Code checkout ──────────────────────────────────────────────
+      - uses: actions/checkout@v4
+        name: Checkout code repository (Skribe)
+      
+      # ───── Toolchain setup ────────────────────────────────────────────
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.1.1
 
       - name: Restore NuGet packages
         run: nuget restore Skribe.sln
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
+      - name: Setup MSBuild (VS Build Tools 2022)
+        uses: microsoft/setup-msbuild@v2
         with:
-          dotnet-version: '7.0.x'
-
-      - name: Build solution
-        run: dotnet build --no-restore
+          vs-version: '[17.0,18.0)'   # pin to VS 2022 channel
       
-      # ───── Test run ────────────────────────────────────────────────────────────
-      - name: Install NUnit Console Runner
+      # ───── Build ──────────────────────────────────────────────────────
+      - name: Build solution (Release|AnyCPU)
+        run: msbuild Skribe.sln /p:Configuration=Release /p:Platform="Any CPU"
+      
+      # ───── Test run ───────────────────────────────────────────────────
+      - name: Install NUnit Console Runner (desktop)
         run: nuget install NUnit.ConsoleRunner -Version 3.20.0 -OutputDirectory testrunner
 
       - name: Locate UnitTests.dll
         id: find_test_dll
         shell: pwsh
         run: |
-          $dll = Get-ChildItem -Path . -Recurse -Filter UnitTests.dll | Select-Object -First 1
+          $dll = Get-ChildItem -Recurse -Filter UnitTests.dll |
+                 Where-Object { $_.FullName -notmatch '\\obj\\' } |
+                 Select-Object -First 1
           if (-not $dll) { Write-Error "UnitTests.dll not found"; exit 1 }
           "TEST_DLL=$($dll.FullName)" | Out-File $env:GITHUB_ENV -Encoding utf8
 
-      - name: Run tests → nunit3 XML
+      - name: Run NUnit tests → nunit3 XML
         shell: pwsh
         run: |
           mkdir TestResults
@@ -54,7 +51,7 @@ jobs:
             "$env:TEST_DLL" `
             --result="TestResults\TestResult.xml"
       
-      # ───── Convert nunit3 → JUnit (Allure-ready) ───────────────────────────────
+      # ───── nunit3 ⇒ JUnit (XSLT) ──────────────────────────────────────
       - name: Download nunit3-junit XSLT
         shell: pwsh
         run: |
@@ -65,12 +62,11 @@ jobs:
       - name: Transform to JUnit XML
         shell: pwsh
         run: |
-          Add-Type -AssemblyName System.Xml,System.Xml.Xsl
           $xslt = New-Object System.Xml.Xsl.XslCompiledTransform
           $xslt.Load("nunit3-junit.xslt")
-          $xslt.Transform("TestResults\TestResult.xml","TestResults\junit.xml")
+          $xslt.Transform("TestResults\TestResult.xml", "TestResults\junit.xml")
       
-      # ───── Allure report ───────────────────────────────────────────────────────
+      # ───── Allure report ──────────────────────────────────────────────
       - name: Install Allure CLI
         shell: pwsh
         run: choco install allure-commandline -y --no-progress
@@ -80,14 +76,18 @@ jobs:
         run: |
           allure generate TestResults --clean -o AllureReport
       
-      # ───── Changelog snippet (existing JS script) ──────────────────────────────
+      # ───── Commit log snippet (unchanged) ─────────────────────────────
+      - name: Setup Node.js (for helper script)
+        uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
       - name: Collect recent commits (Markdown)
         shell: bash
         run: |
           mkdir -p DocUpdates
           node ./scripts/fetch-commits.js
       
-      # ───── Push docs ───────────────────────────────────────────────────────────
+      # ───── Push artefacts to docs repo ────────────────────────────────
       - name: Checkout docs repository
         uses: actions/checkout@v4
         with:
