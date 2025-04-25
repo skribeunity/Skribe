@@ -9,7 +9,7 @@ const options = {
     hostname: 'api.github.com',
     path: `/repos/${owner}/${repo}/commits`,
     headers: {
-        'User-Agent': 'yourusername',
+        'User-Agent': 'skribeunity',
         'Accept': 'application/vnd.github.v3+json',
     },
 };

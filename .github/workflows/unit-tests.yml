@@ -54,7 +54,7 @@ jobs:
       - name: Run NUnit tests and generate XML
         run: |
           mkdir TestResults
-          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe "$env:TEST_DLL_FOLDER\UnitTests.dll" --result=TestResults/TestResult.xml;format=nunit2
+          testrunner\NUnit.ConsoleRunner.3.20.0\tools\nunit3-console.exe "$env:TEST_DLL_FOLDER\UnitTests.dll" --result="TestResults/TestResult.xml;format=nunit2"
         shell: pwsh
 
       - name: Install ReportGenerator
